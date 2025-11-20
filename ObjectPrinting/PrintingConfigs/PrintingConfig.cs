@@ -11,6 +11,8 @@ namespace ObjectPrinting.PrintingConfigs;
 
 public class PrintingConfig<TOwner>
 {
+    private int maxRecursionDepth = 16;
+    
     internal readonly HashSet<Type> ExcludedTypes = new();
     internal readonly HashSet<MemberInfo> ExcludedMembers = new();
     internal readonly Dictionary<Type, Func<object, string>> TypeSerializers = new();
@@ -18,6 +20,16 @@ public class PrintingConfig<TOwner>
     internal readonly Dictionary<Type, CultureInfo> TypeCultures = new();
     internal readonly Dictionary<MemberInfo, int> TrimLengths = new();
 
+    public PrintingConfig<TOwner> SetMaxRecursionDepth(int recursionDepth)
+    {
+        if (recursionDepth <= 0)
+        {
+            throw new ArgumentException("Max recursion depth must be greater than zero.");
+        }
+        maxRecursionDepth = recursionDepth;
+        return this;
+    }
+    
     public PrintingConfig<TOwner> Excluding<TProp>()
     {
         ExcludedTypes.Add(typeof(TProp));
@@ -52,6 +64,11 @@ public class PrintingConfig<TOwner>
 
     private string PrintToString(object? obj, int nestingLevel, HashSet<object> visited)
     {
+        if (nestingLevel > maxRecursionDepth)
+        {
+            return string.Empty;
+        }
+        
         if (obj is null)
         {
             return "null" + Environment.NewLine;
@@ -89,7 +106,7 @@ public class PrintingConfig<TOwner>
 
         if (IsFinalType(type))
         {
-            return obj.ToString();
+            return obj + Environment.NewLine;
         }
 
         if (obj is IDictionary dictionary)
@@ -108,7 +125,7 @@ public class PrintingConfig<TOwner>
     private string PrintObject(object obj, int nestingLevel, HashSet<object> visited)
     {
         var type = obj.GetType();
-        var ident = new string('\t', nestingLevel + 1);
+        var indent = new string('\t', nestingLevel + 1);
         var sb = new StringBuilder();
 
         sb.AppendLine(type.Name);
@@ -119,32 +136,38 @@ public class PrintingConfig<TOwner>
         foreach (var member in members)
         {
             if (ExcludedMembers.Contains(member))
+                continue;
+
+            var value = GetMemberValue(obj, member);
+            
+            if(value is not null && ExcludedTypes.Contains(value.GetType()))
             {
                 continue;
             }
 
-            sb.Append(ident + member.Name + " = ");
-
-            var value = GetMemberValue(obj, member);
-
+            sb.Append(indent + member.Name + " = ");
+            
             if (MemberSerializers.TryGetValue(member, out var memberSerializer))
             {
                 sb.Append(memberSerializer(value)).AppendLine();
+                continue;
             }
             
             if (value is string stringValue && TrimLengths.TryGetValue(member, out int trimLength))
             {
-                if (stringValue.Length > trimLength)
-                {
-                    sb.Append(stringValue.Substring(0, trimLength));
-                }
+                sb.Append(stringValue.Length > trimLength
+                        ? stringValue.Substring(0, trimLength)
+                        : stringValue)
+                    .AppendLine();
+                continue;
             }
             
-            sb.Append(PrintToString(FormatMemberValue(obj, member), nestingLevel + 1, visited));
+            sb.Append(PrintToString(value, nestingLevel + 1, visited));
         }
 
         return sb.ToString();
     }
+
 
     private object? FormatMemberValue(object value, MemberInfo memberInfo)
     {
@@ -204,18 +227,8 @@ public class PrintingConfig<TOwner>
                || type == typeof(string)
                || type == typeof(DateTime)
                || type == typeof(TimeSpan)
-               || type == typeof(decimal);
-    }
-    
-
-    private static object? GetMemberValue(object? obj, MemberInfo member)
-    {
-        return member switch
-        {
-            PropertyInfo p => p.GetValue(obj),
-            FieldInfo f => f.GetValue(obj),
-            _ => throw new InvalidOperationException($"Unsupported member type: {member.MemberType}")
-        };
+               || type == typeof(decimal)
+               || type == typeof(Guid);
     }
     
     private static MemberInfo GetMember<TProp>(Expression<Func<TOwner, TProp>> selector)
@@ -226,5 +239,15 @@ public class PrintingConfig<TOwner>
         }
 
         throw new ArgumentException("Selector must refer to a property or a field.");
+    }
+    
+    private static object? GetMemberValue(object? obj, MemberInfo member)
+    {
+        return member switch
+        {
+            PropertyInfo p => p.GetValue(obj),
+            FieldInfo f => f.GetValue(obj),
+            _ => throw new InvalidOperationException($"Unsupported member type: {member.MemberType}")
+        };
     }
 }
