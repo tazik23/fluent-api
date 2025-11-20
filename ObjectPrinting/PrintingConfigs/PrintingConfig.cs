@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -12,6 +13,7 @@ public class PrintingConfig<TOwner>
     internal readonly HashSet<Type> ExcludedTypes = new();
     internal readonly HashSet<MemberInfo> ExcludedMembers = new();
     internal readonly Dictionary<Type, Func<object, string>> TypeSerializers = new();
+    internal readonly Dictionary<Type, CultureInfo> TypeCultures = new();
 
     public PrintingConfig<TOwner> Excluding<TProp>()
     {
