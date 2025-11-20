@@ -91,38 +91,30 @@ public class PrintingConfig<TOwner>
             visited.Add(obj);
         }
 
-        if (TypeSerializers.TryGetValue(type, out var typeSerializer))
-        {
-            return typeSerializer(obj) + Environment.NewLine;
-        }
-
-        if (obj is IFormattable)
-        {
-            if (TypeCultures.TryGetValue(type, out var culture))
-            {
-                return Convert.ToString(obj, culture) + Environment.NewLine;
-            }
-        }
-
+        return FormatObjectByType(obj, nestingLevel, visited, type);
+    }
+    
+    private string FormatObjectByType(object obj, int nestingLevel, HashSet<object> visited, Type type)
+    {
+        if (TrySerializeType(type, obj, out string? result))
+            return result + Environment.NewLine;
+    
+        if (TryFormatFormattable(obj, type, out result))
+            return result;
+    
         if (IsFinalType(type))
-        {
             return obj + Environment.NewLine;
-        }
-
+    
         if (obj is IDictionary dictionary)
-        {
             return PrintDictionary(dictionary, nestingLevel, visited);
-        }
         
         if (obj is IEnumerable enumerable)
-        {
             return PrintEnumerable(enumerable, nestingLevel, visited);
-        }
         
         return PrintObject(obj, nestingLevel, visited);
     }
-
-    private string PrintObject(object obj, int nestingLevel, HashSet<object> visited)
+    
+        private string PrintObject(object obj, int nestingLevel, HashSet<object> visited)
     {
         var type = obj.GetType();
         var indent = new string('\t', nestingLevel + 1);
@@ -131,13 +123,11 @@ public class PrintingConfig<TOwner>
         sb.AppendLine(type.Name);
 
         var members = type.GetProperties()
-            .Concat(type.GetFields().Cast<MemberInfo>());
+            .Concat(type.GetFields().Cast<MemberInfo>())
+            .Where(m => !ExcludedMembers.Contains(m));
 
         foreach (var member in members)
         {
-            if (ExcludedMembers.Contains(member))
-                continue;
-
             var value = GetMemberValue(obj, member);
 
             if (value is not null && ExcludedTypes.Contains(value.GetType()))
@@ -147,18 +137,15 @@ public class PrintingConfig<TOwner>
 
             sb.Append(indent + member.Name + " = ");
 
-            if (MemberSerializers.TryGetValue(member, out var memberSerializer))
+            if (TrySerializeMember(member, value, out var result))
             {
-                sb.Append(memberSerializer(value)).AppendLine();
+                sb.Append(result).AppendLine();
                 continue;
             }
 
-            if (value is string stringValue && TrimLengths.TryGetValue(member, out int trimLength))
+            if (TryTrimStringMember(member, value, out var trimmed))
             {
-                sb.Append(stringValue.Length > trimLength
-                        ? stringValue.Substring(0, trimLength)
-                        : stringValue)
-                    .AppendLine();
+                sb.Append(trimmed).AppendLine();
                 continue;
             }
 
@@ -206,7 +193,57 @@ public class PrintingConfig<TOwner>
         sb.Append(new string('\t', nesting)).AppendLine("}");
         return sb.ToString();
     }
+    
+    private bool TrySerializeType(Type type, object obj, out string? result)
+    {
+        if (TypeSerializers.TryGetValue(type, out var serializer))
+        {
+            result = serializer(obj);
+            return true;
+        }
+    
+        result = null;
+        return false;
+    }
+    
+    private bool TrySerializeMember(MemberInfo member, object? value, out string? result)
+    {
+        if (MemberSerializers.TryGetValue(member, out var serializer))
+        {
+            result = serializer(value);
+            return true;
+        }
+    
+        result = null;
+        return false;
+    }
 
+    private bool TryFormatFormattable(object obj, Type type, out string result)
+    {
+        if (obj is IFormattable formattable && TypeCultures.TryGetValue(type, out var culture))
+        {
+            result = Convert.ToString(formattable, culture) + Environment.NewLine;
+            return true;
+        }
+    
+        result = string.Empty;
+        return false;
+    }
+    
+    private bool TryTrimStringMember(MemberInfo member, object? value, out string? result)
+    {
+        if (value is string stringValue && TrimLengths.TryGetValue(member, out int trimLength))
+        {
+            result = stringValue.Length > trimLength 
+                ? stringValue.Substring(0, trimLength) 
+                : stringValue;
+            return true;
+        }
+    
+        result = null;
+        return false;
+    }
+    
     private static bool IsFinalType(Type type)
     {
         return type.IsPrimitive
