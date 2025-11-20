@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 
 namespace ObjectPrinting
@@ -8,11 +10,28 @@ namespace ObjectPrinting
     public class PrintingConfig<TOwner>
     {
         internal readonly HashSet<Type> ExcludedTypes = new();
+        internal readonly HashSet<MemberInfo> ExcludedMembers = new();
 
         public PrintingConfig<TOwner> Excluding<TProp>()
         {
             ExcludedTypes.Add(typeof(TProp));
             return this;
+        }
+
+        public PrintingConfig<TOwner> Excluding<TProp>(Expression<Func<TOwner, TProp>> selector)
+        {
+            ExcludedMembers.Add(GetMember(selector));
+            return this;
+        }
+
+        private static MemberInfo GetMember<TProp>(Expression<Func<TOwner, TProp>> selector)
+        {
+            if (selector.Body is MemberExpression memberExpression)
+            {
+                return memberExpression.Member;
+            }
+            
+            throw new ArgumentException("Selector must refer to a property or a field.");
         }
         
         public string PrintToString(TOwner obj)
