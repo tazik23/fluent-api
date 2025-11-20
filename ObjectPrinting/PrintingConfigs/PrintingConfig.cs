@@ -139,20 +139,20 @@ public class PrintingConfig<TOwner>
                 continue;
 
             var value = GetMemberValue(obj, member);
-            
-            if(value is not null && ExcludedTypes.Contains(value.GetType()))
+
+            if (value is not null && ExcludedTypes.Contains(value.GetType()))
             {
                 continue;
             }
 
             sb.Append(indent + member.Name + " = ");
-            
+
             if (MemberSerializers.TryGetValue(member, out var memberSerializer))
             {
                 sb.Append(memberSerializer(value)).AppendLine();
                 continue;
             }
-            
+
             if (value is string stringValue && TrimLengths.TryGetValue(member, out int trimLength))
             {
                 sb.Append(stringValue.Length > trimLength
@@ -161,25 +161,11 @@ public class PrintingConfig<TOwner>
                     .AppendLine();
                 continue;
             }
-            
+
             sb.Append(PrintToString(value, nestingLevel + 1, visited));
         }
 
         return sb.ToString();
-    }
-
-
-    private object? FormatMemberValue(object value, MemberInfo memberInfo)
-    {
-        if (value is string stringValue && TrimLengths.TryGetValue(memberInfo, out int trimLength))
-        {
-            if (stringValue.Length > trimLength)
-            {
-                return stringValue.Substring(0, trimLength);
-            }
-        }
-
-        return value;
     }
 
     private string PrintEnumerable(IEnumerable enumerable, int nestingLevel, HashSet<object> visited)
