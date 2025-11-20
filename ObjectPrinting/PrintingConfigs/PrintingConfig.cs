@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -29,16 +30,6 @@ public class PrintingConfig<TOwner>
         return this;
     }
 
-    private static MemberInfo GetMember<TProp>(Expression<Func<TOwner, TProp>> selector)
-    {
-        if (selector.Body is MemberExpression memberExpression)
-        {
-            return memberExpression.Member;
-        }
-            
-        throw new ArgumentException("Selector must refer to a property or a field.");
-    }
-
     public TypePrintingConfig<TOwner, TProp> Printing<TProp>()
     {
         return new TypePrintingConfig<TOwner, TProp>(this);
@@ -48,41 +39,192 @@ public class PrintingConfig<TOwner>
     {
         return new PropertyPrintingConfig<TOwner, TProp>(this, GetMember(selector));
     }
-    
+
     public StringPropertyPrintingConfig<TOwner> Printing(Expression<Func<TOwner, string>> selector)
     {
         return new StringPropertyPrintingConfig<TOwner>(this, GetMember(selector));
     }
-        
+    
     public string PrintToString(TOwner obj)
     {
-        return PrintToString(obj, 0);
+        return PrintToString(obj, 0, new HashSet<object>());
     }
 
-    private string PrintToString(object obj, int nestingLevel)
+    private string PrintToString(object? obj, int nestingLevel, HashSet<object> visited)
     {
-        //TODO apply configurations
-        if (obj == null)
+        if (obj is null)
+        {
             return "null" + Environment.NewLine;
-
-        var finalTypes = new[]
-        {
-            typeof(int), typeof(double), typeof(float), typeof(string),
-            typeof(DateTime), typeof(TimeSpan)
-        };
-        if (finalTypes.Contains(obj.GetType()))
-            return obj + Environment.NewLine;
-
-        var identation = new string('\t', nestingLevel + 1);
-        var sb = new StringBuilder();
-        var type = obj.GetType();
-        sb.AppendLine(type.Name);
-        foreach (var propertyInfo in type.GetProperties())
-        {
-            sb.Append(identation + propertyInfo.Name + " = " +
-                      PrintToString(propertyInfo.GetValue(obj),
-                          nestingLevel + 1));
         }
+
+        var type = obj.GetType();
+
+        if (ExcludedTypes.Contains(type))
+        {
+            return string.Empty;
+        }
+
+        if (!type.IsValueType)
+        {
+            if (visited.Contains(obj))
+            {
+                return "(cyclic reference)" + Environment.NewLine;
+            }
+
+            visited.Add(obj);
+        }
+
+        if (TypeSerializers.TryGetValue(type, out var typeSerializer))
+        {
+            return typeSerializer(obj) + Environment.NewLine;
+        }
+
+        if (obj is IFormattable)
+        {
+            if (TypeCultures.TryGetValue(type, out var culture))
+            {
+                return Convert.ToString(obj, culture) + Environment.NewLine;
+            }
+        }
+
+        if (IsFinalType(type))
+        {
+            return obj.ToString();
+        }
+
+        if (obj is IDictionary dictionary)
+        {
+            return PrintDictionary(dictionary, nestingLevel, visited);
+        }
+        
+        if (obj is IEnumerable enumerable)
+        {
+            return PrintEnumerable(enumerable, nestingLevel, visited);
+        }
+        
+        return PrintObject(obj, nestingLevel, visited);
+    }
+
+    private string PrintObject(object obj, int nestingLevel, HashSet<object> visited)
+    {
+        var type = obj.GetType();
+        var ident = new string('\t', nestingLevel + 1);
+        var sb = new StringBuilder();
+
+        sb.AppendLine(type.Name);
+
+        var members = type.GetProperties()
+            .Concat(type.GetFields().Cast<MemberInfo>());
+
+        foreach (var member in members)
+        {
+            if (ExcludedMembers.Contains(member))
+            {
+                continue;
+            }
+
+            sb.Append(ident + member.Name + " = ");
+
+            var value = GetMemberValue(obj, member);
+
+            if (MemberSerializers.TryGetValue(member, out var memberSerializer))
+            {
+                sb.Append(memberSerializer(value)).AppendLine();
+            }
+            
+            if (value is string stringValue && TrimLengths.TryGetValue(member, out int trimLength))
+            {
+                if (stringValue.Length > trimLength)
+                {
+                    sb.Append(stringValue.Substring(0, trimLength));
+                }
+            }
+            
+            sb.Append(PrintToString(FormatMemberValue(obj, member), nestingLevel + 1, visited));
+        }
+
         return sb.ToString();
+    }
+
+    private object? FormatMemberValue(object value, MemberInfo memberInfo)
+    {
+        if (value is string stringValue && TrimLengths.TryGetValue(memberInfo, out int trimLength))
+        {
+            if (stringValue.Length > trimLength)
+            {
+                return stringValue.Substring(0, trimLength);
+            }
+        }
+
+        return value;
+    }
+
+    private string PrintEnumerable(IEnumerable enumerable, int nestingLevel, HashSet<object> visited)
+    {
+        var indent = new string('\t', nestingLevel + 1);
+        var sb = new StringBuilder();
+
+        sb.AppendLine("[");
+
+        foreach (var item in enumerable)
+        {
+            sb.Append(indent)
+                .Append(PrintToString(item, nestingLevel + 1, visited));
+        }
+
+        sb.Append(new string('\t', nestingLevel)).AppendLine("]");
+        return sb.ToString();
+    }
+    
+    private string PrintDictionary(IDictionary dict, int nesting, HashSet<object> visited)
+    {
+        var indent = new string('\t', nesting + 1);
+        var sb = new StringBuilder();
+
+        sb.AppendLine("{");
+
+        foreach (DictionaryEntry entry in dict)
+        {
+            var key = entry.Key;
+            var value = entry.Value;
+
+            sb.Append(indent + "[");
+            sb.Append(PrintToString(key, nesting + 1, visited).TrimEnd());
+            sb.Append("] = ");
+            sb.Append(PrintToString(value, nesting + 1, visited));
+        }
+
+        sb.Append(new string('\t', nesting)).AppendLine("}");
+        return sb.ToString();
+    }
+
+    private static bool IsFinalType(Type type)
+    {
+        return type.IsPrimitive
+               || type == typeof(string)
+               || type == typeof(DateTime)
+               || type == typeof(TimeSpan)
+               || type == typeof(decimal);
+    }
+    
+
+    private static object? GetMemberValue(object? obj, MemberInfo member)
+    {
+        return member switch
+        {
+            PropertyInfo p => p.GetValue(obj),
+            FieldInfo f => f.GetValue(obj),
+            _ => throw new InvalidOperationException($"Unsupported member type: {member.MemberType}")
+        };
+    }
+    
+    private static MemberInfo GetMember<TProp>(Expression<Func<TOwner, TProp>> selector)
+    {
+        if (selector.Body is MemberExpression memberExpression)
+        {
+            return memberExpression.Member;
+        }
+
+        throw new ArgumentException("Selector must refer to a property or a field.");
     }
 }

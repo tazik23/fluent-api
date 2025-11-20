@@ -1,6 +1,10 @@
 ﻿using System.Globalization;
+using ObjectPrinting;
+using ObjectPrinting.PrintingConfigs.Extensions;
+using Tests.TestEntities;
 
-namespace ObjectPrinting.Tests
+
+namespace Tests.Tests
 {
     [TestFixture]
     public class ObjectPrinterAcceptanceTests
@@ -12,9 +16,9 @@ namespace ObjectPrinting.Tests
 
             var printer = ObjectPrinter.For<Person>()
                 .Excluding<Guid>() // 1. Исключить из сериализации свойства определенного типа                      
-                .Printing<int>().Using(i => $"Int({i})") // 2. Указать альтернативный способ сериализации для определенного типа    
+                .Printing<int>().Using(i => $"INT: {i}") // 2. Указать альтернативный способ сериализации для определенного типа    
                 .Printing<double>().Using(CultureInfo.InvariantCulture) // 3. Для числовых типов указать культуру
-                .Printing(p => p.Name).Using(n => $"very cool name: {n}") // 4. Настроить сериализацию конкретного свойства
+                .Printing(p => p.Age).Using(a => $"AGE : {a}") // 4. Настроить сериализацию конкретного свойства
                 .Printing(p => p.Name).TrimToLength(10) // 5. Настроить обрезание строковых свойств
                 .Excluding(p => p.Age); // 6. Исключить конкретное свойство
 
