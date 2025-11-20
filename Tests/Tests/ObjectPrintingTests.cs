@@ -1,82 +1,76 @@
-using FluentAssertions;
+using System.Globalization;
 using ObjectPrinting;
-using ObjectPrinting.PrintingConfigs;
 using ObjectPrinting.PrintingConfigs.Extensions;
 using Tests.TestEntities;
 
 namespace Tests.Tests;
 
-public class ObjectPrintingTests
+public partial class ObjectPrintingTests
 {
-    private Person person;
-
-    [SetUp]
-    public void SetUp()
-    {
-        person = new Person { Name = "Alex", Age = 19, Height = 175.123 };
-    }
-
     [Test]
     public async Task PrintToString_SimpleObject_ShouldSerializeAllMembers()
     {
+        var person = new Person { Name = "John", Age = 25 };
         var result = person.PrintToString();
         
         await Verify(result);
     }
-    
+
     [Test]
-    public void PrintToString_ExcludedType_ShouldNotSerializeMembersOfThatType()
+    public async Task PrintToString_WithMaximumConfigurations_ShouldApplyAllCorrectly()
     {
-        var printer = new PrintingConfig<Person>()
-            .Excluding<double>();
+        var testData = new SuperComplexClass
+        {
+            ShortName = "John",
+            VeryLongDescription = "This is a very long description that should be trimmed because it exceeds the maximum allowed length for this property",
+            Age = 35,
+            Weight = 75.5,
+            Salary = 75000.50m,
+            Bonus = 15000.25m,
+            BirthDate = new DateTime(1988, 5, 15, 10, 30, 0),
+            UserId = Guid.Parse("12345678-1234-1234-1234-123456789012"),
+            IsActive = true,
+            Tags = new List<string> { "developer", "senior", "backend", "very-long-tag-that-should-be-trimmed" },
+            Scores = new Dictionary<string, int>
+            {
+                ["C#"] = 95,
+                ["SQL"] = 88,
+                ["JavaScript"] = 76
+            },
+            TeamMembers = new List<SuperComplexClass>
+            {
+                new() { ShortName = "Alice", Age = 28, Salary = 60000.00m },
+                new() { ShortName = "Bob", Age = 32, Salary = 65000.00m }
+            },
+            Manager = new SuperComplexClass { ShortName = "Manager", Age = 45 }
+        };
 
-        var result = printer.PrintToString(person);
+        testData.Manager.TeamMembers.Add(testData);
+        testData.Assistant = testData.TeamMembers[0]; 
+    
+        var printer = ObjectPrinter.For<SuperComplexClass>()
+            .Excluding<bool>()
+            .Excluding<Guid>()
+            .Excluding(x => x.Weight)
+            .Excluding(x => x.Bonus)
+            .Printing<int>().Using(i => $"{i} years")
+            .Printing<double>().Using(d => $"{d} kg")
+            .Printing<decimal>().Using(d => $"{d:C2}")
+            .Printing<DateTime>().Using(dt => dt.ToString("yyyy-MM-dd"))
+            .Printing<string>().Using(s => s.ToUpper())
+            .Printing(x => x.Salary).Using(s => $"Salary: {s}$")
+            .Printing(x => x.Age).Using(a => $"Age is {a}")
+            .Printing(x => x.ShortName).TrimToLength(2)
+            .Printing(x => x.VeryLongDescription).TrimToLength(20)
+            .Printing<decimal>().Using(new CultureInfo("de-DE"))
+            .Printing<double>().Using(new CultureInfo("fr-FR"))
+            .Printing<List<string>>().Using(list => $"Tags[{list.Count}]")
+            .Printing<Dictionary<string, int>>().Using(dict => $"Scores[{dict.Count}]");
 
-        result.Should().NotContain("Height");
+        var result = printer.PrintToString(testData);
+
+        await Verify(result);
     }
     
-    [Test]
-    public void PrintToString_ExcludedType_ShouldNotSerializeAllMembersOfThatType()
-    {
-        var obj = new TestClass { Property = "Prop", Field = "Field" };
-        
-        var printer = ObjectPrinter.For<TestClass>()
-            .Excluding<string>();
-        
-        var result = printer.PrintToString(obj);
-        result.Should().NotContain("Prop").And.NotContain("Field");
-    }
     
-    [Test]
-    public void PrintToString_ExcludedProperty_ShouldNotSerializeProperty()
-    {
-        var printer = new PrintingConfig<Person>()
-            .Excluding(p => p.Age);
-
-        var result = printer.PrintToString(person);
-
-        result.Should().NotContain("Age");
-    }
-    
-    [Test]
-    public void PrintToString_ExcludedField_ShouldNotSerializeField()
-    {
-        var obj = new TestClass { Property = "Prop", Field = "Field" };
-
-        var result = obj.PrintToString(c => c.Excluding(o => o.Field));
-
-        result.Should().Contain("Property").And.NotContain("Field");
-    }
-    
-    [Test]
-    public void PrintToString_ExcludedMultipleMembers_ShouldNotSerializeMultipleMembers()
-    {
-        var printer = ObjectPrinter.For<Person>()
-            .Excluding(p => p.Id)
-            .Excluding(p => p.Age);
-
-        
-        var result = printer.PrintToString(person);
-        result.Should().NotContain("Id").And.NotContain("Age");
-    }
 }
