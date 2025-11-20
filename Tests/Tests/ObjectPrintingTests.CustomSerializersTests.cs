@@ -95,7 +95,7 @@ public partial class ObjectPrintingTests
             var result = printer.PrintToString(testData);
 
             result.Should().Contain("Price = $19,99")
-                .And.Contain("Discount = 0,1") 
+                .And.Contain("Discount = 0.1") 
                 .And.Contain("Name = John"); 
         }
 

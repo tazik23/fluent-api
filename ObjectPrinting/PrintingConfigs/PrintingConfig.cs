@@ -103,7 +103,7 @@ public class PrintingConfig<TOwner>
             return result;
     
         if (IsFinalType(type))
-            return obj + Environment.NewLine;
+            return Convert.ToString(obj, CultureInfo.InvariantCulture) + Environment.NewLine;
     
         if (obj is IDictionary dictionary)
             return PrintDictionary(dictionary, nestingLevel, visited);
