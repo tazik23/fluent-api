@@ -13,6 +13,7 @@ public class PrintingConfig<TOwner>
     internal readonly HashSet<Type> ExcludedTypes = new();
     internal readonly HashSet<MemberInfo> ExcludedMembers = new();
     internal readonly Dictionary<Type, Func<object, string>> TypeSerializers = new();
+    internal readonly Dictionary<MemberInfo, Func<object, string>> MemberSerializers = new();
     internal readonly Dictionary<Type, CultureInfo> TypeCultures = new();
 
     public PrintingConfig<TOwner> Excluding<TProp>()
@@ -40,6 +41,11 @@ public class PrintingConfig<TOwner>
     public TypePrintingConfig<TOwner, TProp> Printing<TProp>()
     {
         return new TypePrintingConfig<TOwner, TProp>(this);
+    }
+
+    public PropertyPrintingConfig<TOwner, TProp> Printing<TProp>(Expression<Func<TOwner, TProp>> selector)
+    {
+        return new PropertyPrintingConfig<TOwner, TProp>(this, GetMember(selector));
     }
         
     public string PrintToString(TOwner obj)
