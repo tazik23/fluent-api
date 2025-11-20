@@ -5,18 +5,18 @@ namespace ObjectPrinting.PrintingConfigs;
 
 public class PropertyPrintingConfig<TOwner, TProp>
 {
-    private readonly PrintingConfig<TOwner> _config;
-    private readonly MemberInfo _member;
+    protected readonly PrintingConfig<TOwner> Config;
+    protected readonly MemberInfo Member;
 
     public PropertyPrintingConfig(PrintingConfig<TOwner> config, MemberInfo member)
     {
-        _config = config;
-        _member = member;
+        Config = config;
+        Member = member;
     }
 
     public PrintingConfig<TOwner> Using(Func<TProp, string> serializer)
     {
-        _config.MemberSerializers[_member] = m => serializer((TProp)m);
-        return _config;
+        Config.MemberSerializers[Member] = m => serializer((TProp)m);
+        return Config;
     }
 }

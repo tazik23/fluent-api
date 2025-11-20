@@ -15,6 +15,7 @@ public class PrintingConfig<TOwner>
     internal readonly Dictionary<Type, Func<object, string>> TypeSerializers = new();
     internal readonly Dictionary<MemberInfo, Func<object, string>> MemberSerializers = new();
     internal readonly Dictionary<Type, CultureInfo> TypeCultures = new();
+    internal readonly Dictionary<MemberInfo, int> TrimLengths = new();
 
     public PrintingConfig<TOwner> Excluding<TProp>()
     {
@@ -46,6 +47,11 @@ public class PrintingConfig<TOwner>
     public PropertyPrintingConfig<TOwner, TProp> Printing<TProp>(Expression<Func<TOwner, TProp>> selector)
     {
         return new PropertyPrintingConfig<TOwner, TProp>(this, GetMember(selector));
+    }
+    
+    public StringPropertyPrintingConfig<TOwner> Printing(Expression<Func<TOwner, string>> selector)
+    {
+        return new StringPropertyPrintingConfig<TOwner>(this, GetMember(selector));
     }
         
     public string PrintToString(TOwner obj)
