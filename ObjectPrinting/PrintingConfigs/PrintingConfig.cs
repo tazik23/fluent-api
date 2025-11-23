@@ -18,7 +18,7 @@ public class PrintingConfig<TOwner>
 
     public PrintingConfig<TOwner> SetMaxRecursionDepth(int recursionDepth)
     {
-        if (recursionDepth <= 0)
+        if (recursionDepth < 0)
         {
             throw new ArgumentException("Max recursion depth must be greater than zero.");
         }

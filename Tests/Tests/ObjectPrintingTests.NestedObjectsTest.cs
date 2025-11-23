@@ -53,13 +53,12 @@ public partial class ObjectPrintingTests
                 .And.NotContain("level16");
         }
         
-        [TestCase(0)]
-        [TestCase(-1)]
-        public void SetMaxRecursionDepth_NotPositiveValue_ShouldThrowArgumentException(int maxDepth)
+        [Test]
+        public void SetMaxRecursionDepth_NegativeValue_ShouldThrowArgumentException()
         {
             var printer = ObjectPrinter.For<Node>();
 
-            var act = () => printer.SetMaxRecursionDepth(maxDepth);
+            var act = () => printer.SetMaxRecursionDepth(-1);
 
             act.Should().Throw<ArgumentException>();
         }
