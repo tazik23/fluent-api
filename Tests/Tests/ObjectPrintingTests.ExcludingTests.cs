@@ -120,5 +120,26 @@ public partial class ObjectPrintingTests
 
             result.Should().Be("Person" + Environment.NewLine);
         }
+
+        [Test]
+        public void PrintToString_Excluding_ShouldDominateOnPrinting()
+        {
+            var printer = ObjectPrinter.For<Person>()
+                .Excluding(p => p.Id)
+                .Printing(p => p.Id).Using(p => "id")
+                .CreatePrinter();
+            var result = printer.PrintToString(person);
+            
+            var expected = $"""
+                            Person
+                            {'\t'}Name = Alex
+                            {'\t'}Height = 175.123
+                            {'\t'}Age = 19
+
+                            """; 
+            
+            result.Should().Be(expected);
+            
+        }
     }
 }   
