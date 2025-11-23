@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO.Pipes;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -13,7 +12,6 @@ namespace ObjectPrinting.PrintingConfigs;
 public class PrintingConfig<TOwner>
 {
     private int maxRecursionDepth = 16;
-
     private readonly HashSet<Type> excludedTypes = new();
     private readonly HashSet<MemberInfo> excludedMembers = new();
     private readonly Dictionary<Type, Func<object, string>> typeSerializers = new();
