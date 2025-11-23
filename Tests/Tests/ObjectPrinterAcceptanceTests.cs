@@ -25,9 +25,9 @@ namespace Tests.Tests
 
             var s1 = printer.PrintToString(person);
         
-            var s2 = person.PrintToString(); // 7. Синтаксический сахар — метод расширения
+            var s2 = person.Print(); // 7. Синтаксический сахар — метод расширения
         
-            var s3 = person.PrintToString(p => p
+            var s3 = person.Print(p => p
                     .Printing<double>().Using(CultureInfo.GetCultureInfo("ru-RU")) // 8. ...с конфигурированием
             );
         }

@@ -62,7 +62,7 @@ public partial class ObjectPrintingTests
         {
             var obj = new TestClass { Property = "Prop", Field = "Field" };
 
-            var result = obj.PrintToString(c => c.Excluding(o => o.Field));
+            var result = obj.Print(c => c.Excluding(o => o.Field));
 
             result.Should().Contain("Property").And.NotContain("Field");
         }

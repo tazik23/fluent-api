@@ -11,7 +11,7 @@ public partial class ObjectPrintingTests
     public async Task PrintToString_SimpleObject_ShouldSerializeAllMembers()
     {
         var person = new Person { Name = "John", Age = 25 };
-        var result = person.PrintToString();
+        var result = person.Print();
         
         await Verify(result);
     }
