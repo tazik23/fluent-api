@@ -28,22 +28,18 @@ public partial class ObjectPrintingTests
                 .CreatePrinter();
 
             var result = printer.PrintToString(person);
+            
+            var expected = $"""
+                            Person
+                            {'\t'}Id = 00000000-0000-0000-0000-000000000000
+                            {'\t'}Name = Alex
+                            {'\t'}Age = 19
 
-            result.Should().NotContain("Height");
+                            """; 
+            
+            result.Should().Be(expected);
         }
-
-        [Test]
-        public void PrintToString_ExcludedType_ShouldNotSerializeAllMembersOfThatType()
-        {
-            var obj = new TestClass { Property = "Prop", field = "Field" };
-
-            var printer = ObjectPrinter.For<TestClass>()
-                .Excluding<string>()
-                .CreatePrinter();
-
-            var result = printer.PrintToString(obj);
-            result.Should().NotContain("Prop").And.NotContain("Field");
-        }
+        
 
         [Test]
         public void PrintToString_ExcludedProperty_ShouldNotSerializeProperty()
@@ -53,8 +49,16 @@ public partial class ObjectPrintingTests
                 .CreatePrinter();
 
             var result = printer.PrintToString(person);
+            
+            var expected = $"""
+                            Person
+                            {'\t'}Id = 00000000-0000-0000-0000-000000000000
+                            {'\t'}Name = Alex
+                            {'\t'}Height = 175.123
 
-            result.Should().NotContain("Age");
+                            """; 
+            
+            result.Should().Be(expected);
         }
 
         [Test]
@@ -64,7 +68,13 @@ public partial class ObjectPrintingTests
 
             var result = obj.Print(c => c.Excluding(o => o.field));
 
-            result.Should().Contain("Property").And.NotContain("Field");
+            var expected = $"""
+                            TestClass
+                            {'\t'}Property = Prop
+                            
+                            """; 
+            
+            result.Should().Be(expected);
         }
 
         [Test]
@@ -76,7 +86,14 @@ public partial class ObjectPrintingTests
                 .CreatePrinter();
             
             var result = printer.PrintToString(person);
-            result.Should().NotContain("Id").And.NotContain("Age");
+            var expected = $"""
+                            Person
+                            {'\t'}Name = Alex
+                            {'\t'}Height = 175.123
+
+                            """; 
+            
+            result.Should().Be(expected);
         }
 
         [Test]
