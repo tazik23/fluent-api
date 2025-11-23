@@ -30,10 +30,17 @@ public partial class ObjectPrintingTests
             var printer = ObjectPrinter.For<CultureTestClass>()
                 .Printing<decimal>().Using(new CultureInfo("de-DE"))
                 .CreatePrinter();
-
             var result = printer.PrintToString(testData);
+            
+            var expected = $"""
+                            CultureTestClass
+                            {'\t'}Decimal = 1234,56
+                            {'\t'}Date = 10/15/2023 14:30:00
+                            {'\t'}Double = 1234.567
 
-            result.Should().Contain("Decimal = 1234,56");
+                            """; 
+
+            result.Should().Be(expected);
         }
         
         [Test]
@@ -46,11 +53,16 @@ public partial class ObjectPrintingTests
                 .CreatePrinter();
 
             var result = printer.PrintToString(testData);
+            
+            var expected = $"""
+                            CultureTestClass
+                            {'\t'}Decimal = 1234.56
+                            {'\t'}Date = 15/10/2023 14:30:00
+                            {'\t'}Double = 1234,567
 
-            result.Should()
-                .Contain("Decimal = 1234.56")
-                .And.Contain("Date = 15/10/2023 14:30:00")
-                .And.Contain("Double = 1234,567");
+                            """; 
+            
+            result.Should().Be(expected);
         }
     }
 }
