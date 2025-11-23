@@ -16,11 +16,17 @@ public partial class ObjectPrintingTests
             var printer = ObjectPrinter.For<TrimTestsClass>()
                 .Printing(p => p.Long).TrimToLength(0)
                 .CreatePrinter();
-
             var result = printer.PrintToString(data);
+            
+            var expected = $"""
+                            TrimTestsClass
+                            {'\t'}Short = null
+                            {'\t'}Long = 
+                            {'\t'}Description = null
 
-            result.Should().Contain("Long = ")
-                .And.NotContain("Very");
+                            """;
+            
+            result.Should().Be(expected);
         }
         
         [Test]
@@ -37,12 +43,57 @@ public partial class ObjectPrintingTests
                 .Printing(p => p.Long).TrimToLength(10)
                 .Printing(p => p.Description).TrimToLength(6)
                 .CreatePrinter();
-
             var result = printer.PrintToString(data);
+            
+            var expected = $"""
+                            TrimTestsClass
+                            {'\t'}Short = Sho
+                            {'\t'}Long = Very long 
+                            {'\t'}Description = Medium
 
-            result.Should().Contain("Short = Sho")
-                .And.Contain("Long = Very long ")
-                .And.Contain("Description = Medium");
+                            """;
+
+            result.Should().Be(expected);
+        }
+        
+        [Test]
+        public void PrintToString_TrimToLengthGreaterThanString_ShouldReturnOriginalString()
+        {
+            var data = new TrimTestsClass { Short = "Hi" };
+            var printer = ObjectPrinter.For<TrimTestsClass>()
+                .Printing(p => p.Short).TrimToLength(10)
+                .CreatePrinter(); 
+            var result = printer.PrintToString(data);
+            
+            var expected = $"""
+                            TrimTestsClass
+                            {'\t'}Short = Hi
+                            {'\t'}Long = null
+                            {'\t'}Description = null
+
+                            """;
+
+            result.Should().Be(expected);
+        }
+        
+        [Test]
+        public void PrintToString_TrimNullString_ShouldHandleGracefully()
+        {
+            var data = new TrimTestsClass { Short = null };
+            var printer = ObjectPrinter.For<TrimTestsClass>()
+                .Printing(p => p.Short).TrimToLength(5)
+                .CreatePrinter();
+            var result = printer.PrintToString(data);
+            
+            var expected = $"""
+                            TrimTestsClass
+                            {'\t'}Short = null
+                            {'\t'}Long = null
+                            {'\t'}Description = null
+
+                            """;
+
+            result.Should().Be(expected);
         }
         
         [Test]
