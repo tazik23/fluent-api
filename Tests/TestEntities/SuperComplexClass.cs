@@ -2,8 +2,8 @@ namespace Tests.TestEntities;
 
 public class SuperComplexClass
 {
-    public string ShortName { get; set; }
-    public string VeryLongDescription { get; set; }
+    public string ShortName { get; set; } = null!;
+    public string VeryLongDescription { get; set; } = null!;
     public int Age { get; set; }
     public double Weight { get; set; }
     public decimal Salary { get; set; }

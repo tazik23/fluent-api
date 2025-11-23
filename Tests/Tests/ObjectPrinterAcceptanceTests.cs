@@ -3,7 +3,6 @@ using ObjectPrinting;
 using ObjectPrinting.PrintingConfigs.Extensions;
 using Tests.TestEntities;
 
-
 namespace Tests.Tests
 {
     [TestFixture]
@@ -20,13 +19,14 @@ namespace Tests.Tests
                 .Printing<double>().Using(CultureInfo.InvariantCulture) // 3. Для числовых типов указать культуру
                 .Printing(p => p.Age).Using(a => $"AGE : {a}") // 4. Настроить сериализацию конкретного свойства
                 .Printing(p => p.Name).TrimToLength(10) // 5. Настроить обрезание строковых свойств
-                .Excluding(p => p.Age); // 6. Исключить конкретное свойство
+                .Excluding(p => p.Age) // 6. Исключить конкретное свойство
+                .Create(); 
 
             var s1 = printer.PrintToString(person);
         
-            var s2 = person.PrintToString(); // 7. Синтаксический сахар — метод расширения
+            var s2 = person.Print(); // 7. Синтаксический сахар — метод расширения
         
-            var s3 = person.PrintToString(p => p
+            var s3 = person.Print(p => p
                     .Printing<double>().Using(CultureInfo.GetCultureInfo("ru-RU")) // 8. ...с конфигурированием
             );
         }

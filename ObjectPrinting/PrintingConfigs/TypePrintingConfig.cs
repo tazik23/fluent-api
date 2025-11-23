@@ -13,7 +13,6 @@ public class TypePrintingConfig<TOwner, TProp>
 
     public PrintingConfig<TOwner> Using(Func<TProp, string> serializer)
     {
-        Config.TypeSerializers[typeof(TProp)] = p => serializer((TProp)p);
-        return Config;
+        return Config.SetSerializerFor(serializer);
     }
 }

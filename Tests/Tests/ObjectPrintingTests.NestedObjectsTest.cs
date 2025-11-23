@@ -13,7 +13,9 @@ public partial class ObjectPrintingTests
         public void PrintToString_NestedObject_ShouldPrintAllLevels()
         {
             var node = Node.CreateChain(3);
-            var printer = ObjectPrinter.For<Node>();
+            var printer = ObjectPrinter
+                .For<Node>()
+                .Create();
             
             var result = printer.PrintToString(node);
 
@@ -26,7 +28,9 @@ public partial class ObjectPrintingTests
         public void PrintToString_WithCyclicReference_ShouldNotFall()
         {
             var node = Node.CreateChainWithCycle();
-            var printer = ObjectPrinter.For<Node>();
+            var printer = ObjectPrinter
+                .For<Node>()
+                .Create();
             
             var act = () => printer.PrintToString(node);
             
@@ -38,7 +42,9 @@ public partial class ObjectPrintingTests
         public void PrintToString_WhenReachesMaxRecursionLevel_ShouldStop()
         {
             var node = Node.CreateChain(16);
-            var printer = ObjectPrinter.For<Node>();
+            var printer = ObjectPrinter
+                .For<Node>()
+                .Create();
             
             var result = printer.PrintToString(node);
 
@@ -47,13 +53,12 @@ public partial class ObjectPrintingTests
                 .And.NotContain("level16");
         }
         
-        [TestCase(0)]
-        [TestCase(-1)]
-        public void SetMaxRecursionDepth_NotPositiveValue_ShouldThrowArgumentException(int maxDepth)
+        [Test]
+        public void SetMaxRecursionDepth_NegativeValue_ShouldThrowArgumentException()
         {
             var printer = ObjectPrinter.For<Node>();
 
-            var act = () => printer.SetMaxRecursionDepth(maxDepth);
+            var act = () => printer.SetMaxRecursionDepth(-1);
 
             act.Should().Throw<ArgumentException>();
         }

@@ -2,7 +2,7 @@ namespace Tests.TestEntities;
 
 public class Node
 {
-    public string Value { get; set; }
+    public string Value { get; set; } = null!;
     public Node? Next { get; set; }
 
     public static Node CreateChain(int length)

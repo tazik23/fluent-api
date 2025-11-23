@@ -11,7 +11,7 @@ public partial class ObjectPrintingTests
     public async Task PrintToString_SimpleObject_ShouldSerializeAllMembers()
     {
         var person = new Person { Name = "John", Age = 25 };
-        var result = person.PrintToString();
+        var result = person.Print();
         
         await Verify(result);
     }
@@ -65,12 +65,11 @@ public partial class ObjectPrintingTests
             .Printing<decimal>().Using(new CultureInfo("de-DE"))
             .Printing<double>().Using(new CultureInfo("fr-FR"))
             .Printing<List<string>>().Using(list => $"Tags[{list.Count}]")
-            .Printing<Dictionary<string, int>>().Using(dict => $"Scores[{dict.Count}]");
+            .Printing<Dictionary<string, int>>().Using(dict => $"Scores[{dict.Count}]")
+            .Create();
 
         var result = printer.PrintToString(testData);
 
         await Verify(result);
     }
-    
-    
 }

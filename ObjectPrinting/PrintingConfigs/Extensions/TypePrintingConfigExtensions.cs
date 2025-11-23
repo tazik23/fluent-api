@@ -9,7 +9,6 @@ public static class TypePrintingConfigExtensions
         this TypePrintingConfig<TOwner, TProp> config, CultureInfo cultureInfo)
         where TProp : IFormattable
     {
-        config.Config.TypeCultures[typeof(TProp)] = cultureInfo;
-        return config.Config;
+        return config.Config.SetCultureFor<TProp>(cultureInfo);
     }
 }

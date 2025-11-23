@@ -24,44 +24,57 @@ public partial class ObjectPrintingTests
         public void PrintToString_ExcludedType_ShouldNotSerializeMembersOfThatType()
         {
             var printer = new PrintingConfig<Person>()
-                .Excluding<double>();
+                .Excluding<double>()
+                .Create();
 
             var result = printer.PrintToString(person);
+            
+            var expected = $"""
+                            Person
+                            {'\t'}Id = 00000000-0000-0000-0000-000000000000
+                            {'\t'}Name = Alex
+                            {'\t'}Age = 19
 
-            result.Should().NotContain("Height");
+                            """; 
+            
+            result.Should().Be(expected);
         }
-
-        [Test]
-        public void PrintToString_ExcludedType_ShouldNotSerializeAllMembersOfThatType()
-        {
-            var obj = new TestClass { Property = "Prop", Field = "Field" };
-
-            var printer = ObjectPrinter.For<TestClass>()
-                .Excluding<string>();
-
-            var result = printer.PrintToString(obj);
-            result.Should().NotContain("Prop").And.NotContain("Field");
-        }
+        
 
         [Test]
         public void PrintToString_ExcludedProperty_ShouldNotSerializeProperty()
         {
             var printer = new PrintingConfig<Person>()
-                .Excluding(p => p.Age);
+                .Excluding(p => p.Age)
+                .Create();
 
             var result = printer.PrintToString(person);
+            
+            var expected = $"""
+                            Person
+                            {'\t'}Id = 00000000-0000-0000-0000-000000000000
+                            {'\t'}Name = Alex
+                            {'\t'}Height = 175.123
 
-            result.Should().NotContain("Age");
+                            """; 
+            
+            result.Should().Be(expected);
         }
 
         [Test]
         public void PrintToString_ExcludedField_ShouldNotSerializeField()
         {
-            var obj = new TestClass { Property = "Prop", Field = "Field" };
+            var obj = new TestClass { Property = "Prop", field = "Field" };
 
-            var result = obj.PrintToString(c => c.Excluding(o => o.Field));
+            var result = obj.Print(c => c.Excluding(o => o.field));
 
-            result.Should().Contain("Property").And.NotContain("Field");
+            var expected = $"""
+                            TestClass
+                            {'\t'}Property = Prop
+                            
+                            """; 
+            
+            result.Should().Be(expected);
         }
 
         [Test]
@@ -69,11 +82,18 @@ public partial class ObjectPrintingTests
         {
             var printer = ObjectPrinter.For<Person>()
                 .Excluding(p => p.Id)
-                .Excluding(p => p.Age);
-
-
+                .Excluding(p => p.Age)
+                .Create();
+            
             var result = printer.PrintToString(person);
-            result.Should().NotContain("Id").And.NotContain("Age");
+            var expected = $"""
+                            Person
+                            {'\t'}Name = Alex
+                            {'\t'}Height = 175.123
+
+                            """; 
+            
+            result.Should().Be(expected);
         }
 
         [Test]
@@ -93,11 +113,33 @@ public partial class ObjectPrintingTests
                 .Excluding<string>()
                 .Excluding<int>()
                 .Excluding(p => p.Id)
-                .Excluding(p => p.Height);
+                .Excluding(p => p.Height)
+                .Create();
 
             var result = printer.PrintToString(person);
 
             result.Should().Be("Person" + Environment.NewLine);
+        }
+
+        [Test]
+        public void PrintToString_Excluding_ShouldDominateOnPrinting()
+        {
+            var printer = ObjectPrinter.For<Person>()
+                .Excluding(p => p.Id)
+                .Printing(p => p.Id).Using(p => "id")
+                .Create();
+            var result = printer.PrintToString(person);
+            
+            var expected = $"""
+                            Person
+                            {'\t'}Name = Alex
+                            {'\t'}Height = 175.123
+                            {'\t'}Age = 19
+
+                            """; 
+            
+            result.Should().Be(expected);
+            
         }
     }
 }   

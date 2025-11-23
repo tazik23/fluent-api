@@ -1,5 +1,6 @@
 using FluentAssertions;
 using ObjectPrinting;
+using Tests.TestEntities;
 
 namespace Tests.Tests;
 
@@ -8,24 +9,24 @@ public partial class ObjectPrintingTests
     [TestFixture]
     public class TrimTests
     {
-        private class TrimTestsClass
-        {
-            public string Short { get; set; }
-            public string Long { get; set; }
-            public string Description { get; set; }
-        }
-
         [Test]
         public void PrintToString_TrimToZeroLength_ShouldReturnEmptyString()
         {
             var data = new TrimTestsClass { Long = "Very long text" };
             var printer = ObjectPrinter.For<TrimTestsClass>()
-                .Printing(p => p.Long).TrimToLength(0);
-
+                .Printing(p => p.Long).TrimToLength(0)
+                .Create();
             var result = printer.PrintToString(data);
+            
+            var expected = $"""
+                            TrimTestsClass
+                            {'\t'}Short = null
+                            {'\t'}Long = 
+                            {'\t'}Description = null
 
-            result.Should().Contain("Long = ")
-                .And.NotContain("Very");
+                            """;
+            
+            result.Should().Be(expected);
         }
         
         [Test]
@@ -40,13 +41,59 @@ public partial class ObjectPrintingTests
             var printer = ObjectPrinter.For<TrimTestsClass>()
                 .Printing(p => p.Short).TrimToLength(3)
                 .Printing(p => p.Long).TrimToLength(10)
-                .Printing(p => p.Description).TrimToLength(6);
-
+                .Printing(p => p.Description).TrimToLength(6)
+                .Create();
             var result = printer.PrintToString(data);
+            
+            var expected = $"""
+                            TrimTestsClass
+                            {'\t'}Short = Sho
+                            {'\t'}Long = Very long 
+                            {'\t'}Description = Medium
 
-            result.Should().Contain("Short = Sho")
-                .And.Contain("Long = Very long ")
-                .And.Contain("Description = Medium");
+                            """;
+
+            result.Should().Be(expected);
+        }
+        
+        [Test]
+        public void PrintToString_TrimToLengthGreaterThanString_ShouldReturnOriginalString()
+        {
+            var data = new TrimTestsClass { Short = "Hi" };
+            var printer = ObjectPrinter.For<TrimTestsClass>()
+                .Printing(p => p.Short).TrimToLength(10)
+                .Create(); 
+            var result = printer.PrintToString(data);
+            
+            var expected = $"""
+                            TrimTestsClass
+                            {'\t'}Short = Hi
+                            {'\t'}Long = null
+                            {'\t'}Description = null
+
+                            """;
+
+            result.Should().Be(expected);
+        }
+        
+        [Test]
+        public void PrintToString_TrimNullString_ShouldHandleGracefully()
+        {
+            var data = new TrimTestsClass { Short = null };
+            var printer = ObjectPrinter.For<TrimTestsClass>()
+                .Printing(p => p.Short).TrimToLength(5)
+                .Create();
+            var result = printer.PrintToString(data);
+            
+            var expected = $"""
+                            TrimTestsClass
+                            {'\t'}Short = null
+                            {'\t'}Long = null
+                            {'\t'}Description = null
+
+                            """;
+
+            result.Should().Be(expected);
         }
         
         [Test]
