@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -33,7 +34,7 @@ public class ObjectPrinter
             return string.Empty;
         
         if (obj is null)
-            return "null" + Environment.NewLine;
+            return "null" + NewLine;
 
         var type = obj.GetType();
 
@@ -41,108 +42,102 @@ public class ObjectPrinter
             return string.Empty;
 
         if (IsCyclicReference(obj, type, visited))
-            return "(cyclic reference)" + Environment.NewLine;
+            return "(cyclic reference)" + NewLine;
 
-        return FormatObjectByType(obj, nestingLevel, visited, type);
+        return FormatByType(obj, nestingLevel, visited, type);
     }
     
-    private string FormatObjectByType(object obj, int nestingLevel, HashSet<object> visited, Type type)
+    private string FormatByType(object obj, int nestingLevel, HashSet<object> visited, Type type)
     {
-        if (TrySerializeType(type, obj, out string? result))
-            return result + Environment.NewLine;
+        if (TrySerializeType(type, obj, out var result))
+            return result + NewLine;
     
         if (TryFormatFormattable(obj, type, out result))
-            return result;
+            return result + NewLine;
     
         if (IsFinalType(type))
-            return obj + Environment.NewLine;
-    
-        if (obj is IDictionary dictionary)
-            return PrintDictionary(dictionary, nestingLevel, visited);
-        
-        if (obj is IEnumerable enumerable)
-            return PrintEnumerable(enumerable, nestingLevel, visited);
-        
-        return PrintObject(obj, nestingLevel, visited);
+            return Convert.ToString(obj, CultureInfo.InvariantCulture) + NewLine;
+
+        return obj switch
+        {
+            IDictionary dictionary => PrintDictionary(dictionary, nestingLevel, visited),
+            IEnumerable enumerable => PrintEnumerable(enumerable, nestingLevel, visited),
+            _ => PrintObject(obj, nestingLevel, visited)
+        };
     }
     
     private string PrintObject(object obj, int nestingLevel, HashSet<object> visited)
     {
         var type = obj.GetType();
-        var indent = new string('\t', nestingLevel + 1);
+        var indent = Indent(nestingLevel + 1);
         var sb = new StringBuilder();
 
         sb.AppendLine(type.Name);
 
-        var members = type.GetProperties()
-            .Concat(type.GetFields().Cast<MemberInfo>())
-            .Where(m => !settings.ExcludedMembers.Contains(m));
+        var members = GetFilteredMembers(type);
 
         foreach (var member in members)
         {
-            var value = GetMemberValue(obj, member);
-
-            if (value is not null && settings.ExcludedTypes.Contains(value.GetType()))
-            {
-                continue;
-            }
-
-            sb.Append(indent + member.Name + " = ");
-
-            if (TrySerializeMember(member, value, out var result))
-            {
-                sb.Append(result).AppendLine();
-                continue;
-            }
-
-            if (TryTrimStringMember(member, value, out var trimmed))
-            {
-                sb.Append(trimmed).AppendLine();
-                continue;
-            }
-
-            sb.Append(PrintToString(value, nestingLevel + 1, visited));
+            sb.Append(ProcessMember(obj, member, indent, nestingLevel, visited));
         }
 
         return sb.ToString();
+    }
+    
+    private string ProcessMember(
+        object obj, MemberInfo member, string indent, int nestingLevel, HashSet<object> visited)
+    {
+        var value = GetMemberValue(obj, member);
+        var prefix = $"{indent}{member.Name} = ";
+
+        if (value is null)
+            return prefix + null + NewLine;
+        
+        if (settings.ExcludedTypes.Contains(value.GetType()))
+            return string.Empty;
+
+        if (TrySerializeMember(member, value, out var result))
+            return prefix + result + NewLine;
+        
+        if (TryTrimStringMember(member, value, out var trimmed))
+            return prefix + trimmed + NewLine;
+
+        return prefix + PrintToString(value, nestingLevel + 1, visited);
     }
 
     private string PrintEnumerable(IEnumerable enumerable, int nestingLevel, HashSet<object> visited)
     {
-        var indent = new string('\t', nestingLevel + 1);
+        var indent = Indent(nestingLevel + 1);
         var sb = new StringBuilder();
 
         sb.AppendLine("[");
-
+        
         foreach (var item in enumerable)
         {
-            sb.Append(indent)
-                .Append(PrintToString(item, nestingLevel + 1, visited));
+            sb.Append(indent).Append(PrintToString(item, nestingLevel + 1, visited));
         }
 
-        sb.Append(new string('\t', nestingLevel)).AppendLine("]");
+        sb.Append(Indent(nestingLevel)).AppendLine("]");
         return sb.ToString();
     }
     
-    private string PrintDictionary(IDictionary dict, int nesting, HashSet<object> visited)
+    private string PrintDictionary(IDictionary dict, int nestingLevel, HashSet<object> visited)
     {
-        var indent = new string('\t', nesting + 1);
+        var indent = Indent(nestingLevel + 1);
         var sb = new StringBuilder();
 
         sb.AppendLine("{");
 
         foreach (DictionaryEntry entry in dict)
         {
-            var key = entry.Key;
-            var value = entry.Value;
-
-            sb.Append(indent + "[");
-            sb.Append(PrintToString(key, nesting + 1, visited).TrimEnd());
-            sb.Append("] = ");
-            sb.Append(PrintToString(value, nesting + 1, visited));
+            sb.Append(indent)
+                .Append('[')
+                .Append(PrintToString(entry.Key, nestingLevel + 1, visited).TrimEnd())
+                .Append("] = ")
+                .Append(PrintToString(entry.Value, nestingLevel + 1, visited));
         }
 
-        sb.Append(new string('\t', nesting)).AppendLine("}");
+        sb.Append(Indent(nestingLevel)).AppendLine("}");
         return sb.ToString();
     }
     
@@ -158,7 +153,7 @@ public class ObjectPrinter
         return false;
     }
     
-    private bool TrySerializeMember(MemberInfo member, object? value, out string? result)
+    private bool TrySerializeMember(MemberInfo member, object value, out string? result)
     {
         if (settings.MemberSerializers.TryGetValue(member, out var serializer))
         {
@@ -170,11 +165,11 @@ public class ObjectPrinter
         return false;
     }
 
-    private bool TryFormatFormattable(object obj, Type type, out string result)
+    private bool TryFormatFormattable(object obj, Type type, out string? result)
     {
         if (obj is IFormattable formattable && settings.TypeCultures.TryGetValue(type, out var culture))
         {
-            result = Convert.ToString(formattable, culture) + Environment.NewLine;
+            result = Convert.ToString(formattable, culture);
             return true;
         }
     
@@ -182,9 +177,9 @@ public class ObjectPrinter
         return false;
     }
     
-    private bool TryTrimStringMember(MemberInfo member, object? value, out string? result)
+    private bool TryTrimStringMember(MemberInfo member, object value, out string? result)
     {
-        if (value is string stringValue && settings.TrimLengths.TryGetValue(member, out int trimLength))
+        if (value is string stringValue && settings.TrimLengths.TryGetValue(member, out var trimLength))
         {
             result = stringValue.Length > trimLength 
                 ? stringValue.Substring(0, trimLength) 
@@ -205,10 +200,15 @@ public class ObjectPrinter
     {
         return type.IsPrimitive
                || type == typeof(string)
-               || type == typeof(DateTime)
-               || type == typeof(TimeSpan)
-               || type == typeof(decimal)
-               || type == typeof(Guid);
+               || type.IsEnum
+               || typeof(IFormattable).IsAssignableFrom(type);
+    }
+    
+    private IEnumerable<MemberInfo> GetFilteredMembers(Type type)
+    {
+        return type.GetProperties()
+            .Concat(type.GetFields().Cast<MemberInfo>())
+            .Where(m => !settings.ExcludedMembers.Contains(m));
     }
     
     private static object? GetMemberValue(object? obj, MemberInfo member)
@@ -217,7 +217,10 @@ public class ObjectPrinter
         {
             PropertyInfo p => p.GetValue(obj),
             FieldInfo f => f.GetValue(obj),
-            _ => throw new InvalidOperationException($"Unsupported member type: {member.MemberType}")
+            _ => throw new ArgumentOutOfRangeException($"Unsupported member type: {member.MemberType}")
         };
     }
+    
+    private static string Indent(int level) => new('\t', level);
+    private static string NewLine => Environment.NewLine;
 }
