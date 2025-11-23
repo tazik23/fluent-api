@@ -30,31 +30,18 @@ public class ObjectPrinter
     private string PrintToString(object? obj, int nestingLevel, HashSet<object> visited)
     {
         if (nestingLevel > settings.MaxRecursionDepth)
-        {
             return string.Empty;
-        }
         
         if (obj is null)
-        {
             return "null" + Environment.NewLine;
-        }
 
         var type = obj.GetType();
 
         if (settings.ExcludedTypes.Contains(type))
-        {
             return string.Empty;
-        }
 
-        if (!type.IsValueType)
-        {
-            if (visited.Contains(obj))
-            {
-                return "(cyclic reference)" + Environment.NewLine;
-            }
-
-            visited.Add(obj);
-        }
+        if (IsCyclicReference(obj, type, visited))
+            return "(cyclic reference)" + Environment.NewLine;
 
         return FormatObjectByType(obj, nestingLevel, visited, type);
     }
@@ -207,6 +194,11 @@ public class ObjectPrinter
     
         result = null;
         return false;
+    }
+    
+    private static bool IsCyclicReference(object obj, Type type, HashSet<object> visited)
+    {
+        return !type.IsValueType && !visited.Add(obj);
     }
     
     private static bool IsFinalType(Type type)
