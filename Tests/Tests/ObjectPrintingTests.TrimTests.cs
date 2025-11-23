@@ -15,7 +15,7 @@ public partial class ObjectPrintingTests
             var data = new TrimTestsClass { Long = "Very long text" };
             var printer = ObjectPrinter.For<TrimTestsClass>()
                 .Printing(p => p.Long).TrimToLength(0)
-                .CreatePrinter();
+                .Create();
             var result = printer.PrintToString(data);
             
             var expected = $"""
@@ -42,7 +42,7 @@ public partial class ObjectPrintingTests
                 .Printing(p => p.Short).TrimToLength(3)
                 .Printing(p => p.Long).TrimToLength(10)
                 .Printing(p => p.Description).TrimToLength(6)
-                .CreatePrinter();
+                .Create();
             var result = printer.PrintToString(data);
             
             var expected = $"""
@@ -62,7 +62,7 @@ public partial class ObjectPrintingTests
             var data = new TrimTestsClass { Short = "Hi" };
             var printer = ObjectPrinter.For<TrimTestsClass>()
                 .Printing(p => p.Short).TrimToLength(10)
-                .CreatePrinter(); 
+                .Create(); 
             var result = printer.PrintToString(data);
             
             var expected = $"""
@@ -82,7 +82,7 @@ public partial class ObjectPrintingTests
             var data = new TrimTestsClass { Short = null };
             var printer = ObjectPrinter.For<TrimTestsClass>()
                 .Printing(p => p.Short).TrimToLength(5)
-                .CreatePrinter();
+                .Create();
             var result = printer.PrintToString(data);
             
             var expected = $"""

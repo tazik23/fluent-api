@@ -84,7 +84,7 @@ public class PrintingConfig<TOwner>
         return this;
     }
 
-    public PrinterSettings CreateSettings()
+    private PrinterSettings CreateSettings()
     {
         return new PrinterSettings(
             maxRecursionDepth,
@@ -97,7 +97,7 @@ public class PrintingConfig<TOwner>
         );
     }
 
-    public ObjectPrinter CreatePrinter()
+    public ObjectPrinter Create()
     {
         return new ObjectPrinter(CreateSettings());
     }

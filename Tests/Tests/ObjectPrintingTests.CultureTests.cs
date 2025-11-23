@@ -29,7 +29,7 @@ public partial class ObjectPrintingTests
         {
             var printer = ObjectPrinter.For<CultureTestClass>()
                 .Printing<decimal>().Using(new CultureInfo("de-DE"))
-                .CreatePrinter();
+                .Create();
             var result = printer.PrintToString(testData);
             
             var expected = $"""
@@ -50,7 +50,7 @@ public partial class ObjectPrintingTests
                 .Printing<double>().Using(new CultureInfo("es-ES"))
                 .Printing<decimal>().Using(new CultureInfo("en-US"))
                 .Printing<DateTime>().Using(new CultureInfo("fr-FR"))
-                .CreatePrinter();
+                .Create();
 
             var result = printer.PrintToString(testData);
             

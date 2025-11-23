@@ -25,7 +25,7 @@ public partial class ObjectPrintingTests
         {
             var printer = new PrintingConfig<Person>()
                 .Excluding<double>()
-                .CreatePrinter();
+                .Create();
 
             var result = printer.PrintToString(person);
             
@@ -46,7 +46,7 @@ public partial class ObjectPrintingTests
         {
             var printer = new PrintingConfig<Person>()
                 .Excluding(p => p.Age)
-                .CreatePrinter();
+                .Create();
 
             var result = printer.PrintToString(person);
             
@@ -83,7 +83,7 @@ public partial class ObjectPrintingTests
             var printer = ObjectPrinter.For<Person>()
                 .Excluding(p => p.Id)
                 .Excluding(p => p.Age)
-                .CreatePrinter();
+                .Create();
             
             var result = printer.PrintToString(person);
             var expected = $"""
@@ -114,7 +114,7 @@ public partial class ObjectPrintingTests
                 .Excluding<int>()
                 .Excluding(p => p.Id)
                 .Excluding(p => p.Height)
-                .CreatePrinter();
+                .Create();
 
             var result = printer.PrintToString(person);
 
@@ -127,7 +127,7 @@ public partial class ObjectPrintingTests
             var printer = ObjectPrinter.For<Person>()
                 .Excluding(p => p.Id)
                 .Printing(p => p.Id).Using(p => "id")
-                .CreatePrinter();
+                .Create();
             var result = printer.PrintToString(person);
             
             var expected = $"""

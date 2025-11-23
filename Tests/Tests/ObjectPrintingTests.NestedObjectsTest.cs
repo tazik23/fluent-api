@@ -15,7 +15,7 @@ public partial class ObjectPrintingTests
             var node = Node.CreateChain(3);
             var printer = ObjectPrinter
                 .For<Node>()
-                .CreatePrinter();
+                .Create();
             
             var result = printer.PrintToString(node);
 
@@ -30,7 +30,7 @@ public partial class ObjectPrintingTests
             var node = Node.CreateChainWithCycle();
             var printer = ObjectPrinter
                 .For<Node>()
-                .CreatePrinter();
+                .Create();
             
             var act = () => printer.PrintToString(node);
             
@@ -44,7 +44,7 @@ public partial class ObjectPrintingTests
             var node = Node.CreateChain(16);
             var printer = ObjectPrinter
                 .For<Node>()
-                .CreatePrinter();
+                .Create();
             
             var result = printer.PrintToString(node);
 

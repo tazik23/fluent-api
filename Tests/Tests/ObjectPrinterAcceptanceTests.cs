@@ -20,7 +20,7 @@ namespace Tests.Tests
                 .Printing(p => p.Age).Using(a => $"AGE : {a}") // 4. Настроить сериализацию конкретного свойства
                 .Printing(p => p.Name).TrimToLength(10) // 5. Настроить обрезание строковых свойств
                 .Excluding(p => p.Age) // 6. Исключить конкретное свойство
-                .CreatePrinter(); 
+                .Create(); 
 
             var s1 = printer.PrintToString(person);
         

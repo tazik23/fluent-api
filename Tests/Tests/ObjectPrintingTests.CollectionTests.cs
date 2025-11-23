@@ -15,7 +15,7 @@
             public void PrintToString_Array_ShouldPrintEachElement()
             {
                 var data = new[] { 1, 2, 3 };
-                var printer = ObjectPrinter.For<int[]>().CreatePrinter();
+                var printer = ObjectPrinter.For<int[]>().Create();
                 var result = printer.PrintToString(data);
                 
                 var expected = $"""
@@ -38,7 +38,7 @@
                     new CollectionTestsClass { Name = "Alice", Age = 25 },
                     new CollectionTestsClass { Name = "Bob", Age = 30 }
                 };
-                var printer = ObjectPrinter.For<CollectionTestsClass[]>().CreatePrinter();
+                var printer = ObjectPrinter.For<CollectionTestsClass[]>().Create();
                 var result = printer.PrintToString(data);
                 
                 var expected = $"""
@@ -68,7 +68,7 @@
                     [1] = "1",
                     [2] = "2"
                 };
-                var printer = ObjectPrinter.For<Dictionary<int, string>>().CreatePrinter();
+                var printer = ObjectPrinter.For<Dictionary<int, string>>().Create();
                 var result = printer.PrintToString(dict);
                 
                 var expected = $$"""
@@ -94,7 +94,7 @@
 
                 var printer = ObjectPrinter
                     .For<Dictionary<CollectionTestsClass, Department>>()
-                    .CreatePrinter();
+                    .Create();
                 var result = printer.PrintToString(dict);
                 
                 var expected = $$"""
@@ -125,7 +125,7 @@
                 var data = new CollectionTestsClass { Name = "Test", Friends = null };
                 var printer = ObjectPrinter
                     .For<CollectionTestsClass>()
-                    .CreatePrinter();
+                    .Create();
                 var result = printer.PrintToString(data);
                 
                 var expected = $"""
@@ -163,7 +163,7 @@
             public void PrintToString_EmptyCollections_ShouldShowEmptyStructure(
                 IEnumerable emptyCollection)
             {
-                var printer = ObjectPrinter.For<IEnumerable>().CreatePrinter();
+                var printer = ObjectPrinter.For<IEnumerable>().Create();
                 var result = printer.PrintToString(emptyCollection);
                 
                 var expected = $"[{Environment.NewLine}]{Environment.NewLine}";
@@ -174,7 +174,7 @@
             [Test]
             public void PrintToString_EmptyDictionary_ShouldShowEmptyStructure()
             {
-                var printer  = ObjectPrinter.For<Dictionary<object, object>>().CreatePrinter();
+                var printer  = ObjectPrinter.For<Dictionary<object, object>>().Create();
                 var result = printer.PrintToString(new Dictionary<object, object>());
                 
                 var expected = $"{{{Environment.NewLine}}}{Environment.NewLine}";
