@@ -2,6 +2,7 @@ using System.Globalization;
 using FluentAssertions;
 using ObjectPrinting;
 using ObjectPrinting.PrintingConfigs.Extensions;
+using Tests.TestEntities;
 
 namespace Tests.Tests;
 
@@ -10,13 +11,6 @@ public partial class ObjectPrintingTests
     [TestFixture]
     public class CultureTests
     {
-        public class CultureTestClass
-        {
-            public decimal Decimal { get; set; }
-            public DateTime Date { get; set; }
-            public double Double { get; set; }
-        }
-        
         private CultureTestClass testData;
 
         [SetUp]

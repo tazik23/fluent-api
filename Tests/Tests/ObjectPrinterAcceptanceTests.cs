@@ -3,7 +3,6 @@ using ObjectPrinting;
 using ObjectPrinting.PrintingConfigs.Extensions;
 using Tests.TestEntities;
 
-
 namespace Tests.Tests
 {
     [TestFixture]

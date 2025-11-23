@@ -1,5 +1,6 @@
 using FluentAssertions;
 using ObjectPrinting;
+using Tests.TestEntities;
 
 namespace Tests.Tests;
 
@@ -8,13 +9,6 @@ public partial class ObjectPrintingTests
     [TestFixture]
     public class TrimTests
     {
-        private class TrimTestsClass
-        {
-            public string Short { get; set; }
-            public string Long { get; set; }
-            public string Description { get; set; }
-        }
-
         [Test]
         public void PrintToString_TrimToZeroLength_ShouldReturnEmptyString()
         {

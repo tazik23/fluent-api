@@ -1,18 +1,14 @@
 using FluentAssertions;
 using ObjectPrinting;
+using Tests.TestEntities;
 
 namespace Tests.Tests;
 
 public partial class ObjectPrintingTests
 {
     [TestFixture]
-    public partial class CollectionTests
+    public class CollectionTests
     {
-        private class Department
-        {
-            public string Name { get; set; }
-        }
-
         [Test]
         public void PrintToString_Array_ShouldPrintEachElement()
         {

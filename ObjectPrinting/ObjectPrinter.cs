@@ -91,7 +91,7 @@ public class ObjectPrinter
         var prefix = $"{indent}{member.Name} = ";
 
         if (value is null)
-            return prefix + null + NewLine;
+            return prefix + "null" + NewLine;
         
         if (settings.ExcludedTypes.Contains(value.GetType()))
             return string.Empty;

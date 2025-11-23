@@ -35,7 +35,7 @@ public partial class ObjectPrintingTests
         [Test]
         public void PrintToString_ExcludedType_ShouldNotSerializeAllMembersOfThatType()
         {
-            var obj = new TestClass { Property = "Prop", Field = "Field" };
+            var obj = new TestClass { Property = "Prop", field = "Field" };
 
             var printer = ObjectPrinter.For<TestClass>()
                 .Excluding<string>()
@@ -60,9 +60,9 @@ public partial class ObjectPrintingTests
         [Test]
         public void PrintToString_ExcludedField_ShouldNotSerializeField()
         {
-            var obj = new TestClass { Property = "Prop", Field = "Field" };
+            var obj = new TestClass { Property = "Prop", field = "Field" };
 
-            var result = obj.Print(c => c.Excluding(o => o.Field));
+            var result = obj.Print(c => c.Excluding(o => o.field));
 
             result.Should().Contain("Property").And.NotContain("Field");
         }

@@ -2,6 +2,7 @@ using System.Globalization;
 using FluentAssertions;
 using ObjectPrinting;
 using ObjectPrinting.PrintingConfigs.Extensions;
+using Tests.TestEntities;
 
 namespace Tests.Tests;
 
@@ -10,15 +11,6 @@ public partial class ObjectPrintingTests
     [TestFixture]
     public class CustomSerializerTests
     {
-        private class CustomSerializerTestsClass
-        {
-            public Guid Id { get; set; }
-            public string Name { get; set; }    
-            public int Age { get; set; }
-            public decimal Price { get; set; }
-            public decimal Discount { get; set; }
-        }
-
         private CustomSerializerTestsClass testData;
 
         [SetUp]
@@ -100,7 +92,7 @@ public partial class ObjectPrintingTests
             var result = printer.PrintToString(testData);
 
             result.Should().Contain("Price = $19,99")
-                .And.Contain("Discount = 0,1") 
+                .And.Contain("Discount = 0.1") 
                 .And.Contain("Name = John"); 
         }
 
