@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO.Pipes;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -12,13 +13,13 @@ namespace ObjectPrinting.PrintingConfigs;
 public class PrintingConfig<TOwner>
 {
     private int maxRecursionDepth = 16;
-    
-    internal readonly HashSet<Type> ExcludedTypes = new();
-    internal readonly HashSet<MemberInfo> ExcludedMembers = new();
-    internal readonly Dictionary<Type, Func<object, string>> TypeSerializers = new();
-    internal readonly Dictionary<MemberInfo, Func<object, string>> MemberSerializers = new();
-    internal readonly Dictionary<Type, CultureInfo> TypeCultures = new();
-    internal readonly Dictionary<MemberInfo, int> TrimLengths = new();
+
+    private readonly HashSet<Type> excludedTypes = new();
+    private readonly HashSet<MemberInfo> excludedMembers = new();
+    private readonly Dictionary<Type, Func<object, string>> typeSerializers = new();
+    private readonly Dictionary<MemberInfo, Func<object, string>> memberSerializers = new();
+    private readonly Dictionary<Type, CultureInfo> typeCultures = new();
+    private readonly Dictionary<MemberInfo, int> trimLengths = new();
 
     public PrintingConfig<TOwner> SetMaxRecursionDepth(int recursionDepth)
     {
@@ -32,13 +33,13 @@ public class PrintingConfig<TOwner>
     
     public PrintingConfig<TOwner> Excluding<TProp>()
     {
-        ExcludedTypes.Add(typeof(TProp));
+        excludedTypes.Add(typeof(TProp));
         return this;
     }
 
     public PrintingConfig<TOwner> Excluding<TProp>(Expression<Func<TOwner, TProp>> selector)
     {
-        ExcludedMembers.Add(GetMember(selector));
+        excludedMembers.Add(GetMember(selector));
         return this;
     }
 
@@ -49,12 +50,43 @@ public class PrintingConfig<TOwner>
 
     public PropertyPrintingConfig<TOwner, TProp> Printing<TProp>(Expression<Func<TOwner, TProp>> selector)
     {
-        return new PropertyPrintingConfig<TOwner, TProp>(this, GetMember(selector));
+        return new PropertyPrintingConfig<TOwner, TProp>(this, selector);
     }
 
     public StringPropertyPrintingConfig<TOwner> Printing(Expression<Func<TOwner, string>> selector)
     {
-        return new StringPropertyPrintingConfig<TOwner>(this, GetMember(selector));
+        return new StringPropertyPrintingConfig<TOwner>(this, selector);
+    }
+    
+    public PrintingConfig<TOwner> SetSerializerFor<TProp>(Func<TProp, string> serializer)
+    {
+        typeSerializers[typeof(TProp)] = p => serializer((TProp)p);
+        return this;
+    }
+    
+    public PrintingConfig<TOwner> SetSerializerFor<TProp>(
+        Expression<Func<TOwner, TProp>> selector, Func<TProp, string> serializer)
+    {
+        memberSerializers[GetMember(selector)] = m => serializer((TProp)m);
+        return this;
+    }
+
+    public PrintingConfig<TOwner> SetCultureFor<TProp>(CultureInfo culture)
+        where TProp : IFormattable
+    {
+        typeCultures[typeof(TProp)] = culture;
+        return this;
+    }
+
+    public PrintingConfig<TOwner> TrimMember(Expression<Func<TOwner, string>> selector, int trimLength)
+    {
+        if (trimLength < 0)
+        {
+            throw new ArgumentException("Max length cannot be less than zero.");
+        }
+        
+        trimLengths[GetMember(selector)] = trimLength;
+        return this;
     }
     
     public string PrintToString(TOwner obj)
@@ -76,7 +108,7 @@ public class PrintingConfig<TOwner>
 
         var type = obj.GetType();
 
-        if (ExcludedTypes.Contains(type))
+        if (excludedTypes.Contains(type))
         {
             return string.Empty;
         }
@@ -124,13 +156,13 @@ public class PrintingConfig<TOwner>
 
         var members = type.GetProperties()
             .Concat(type.GetFields().Cast<MemberInfo>())
-            .Where(m => !ExcludedMembers.Contains(m));
+            .Where(m => !excludedMembers.Contains(m));
 
         foreach (var member in members)
         {
             var value = GetMemberValue(obj, member);
 
-            if (value is not null && ExcludedTypes.Contains(value.GetType()))
+            if (value is not null && excludedTypes.Contains(value.GetType()))
             {
                 continue;
             }
@@ -196,7 +228,7 @@ public class PrintingConfig<TOwner>
     
     private bool TrySerializeType(Type type, object obj, out string? result)
     {
-        if (TypeSerializers.TryGetValue(type, out var serializer))
+        if (typeSerializers.TryGetValue(type, out var serializer))
         {
             result = serializer(obj);
             return true;
@@ -208,7 +240,7 @@ public class PrintingConfig<TOwner>
     
     private bool TrySerializeMember(MemberInfo member, object? value, out string? result)
     {
-        if (MemberSerializers.TryGetValue(member, out var serializer))
+        if (memberSerializers.TryGetValue(member, out var serializer))
         {
             result = serializer(value);
             return true;
@@ -220,7 +252,7 @@ public class PrintingConfig<TOwner>
 
     private bool TryFormatFormattable(object obj, Type type, out string result)
     {
-        if (obj is IFormattable formattable && TypeCultures.TryGetValue(type, out var culture))
+        if (obj is IFormattable formattable && typeCultures.TryGetValue(type, out var culture))
         {
             result = Convert.ToString(formattable, culture) + Environment.NewLine;
             return true;
@@ -232,7 +264,7 @@ public class PrintingConfig<TOwner>
     
     private bool TryTrimStringMember(MemberInfo member, object? value, out string? result)
     {
-        if (value is string stringValue && TrimLengths.TryGetValue(member, out int trimLength))
+        if (value is string stringValue && trimLengths.TryGetValue(member, out int trimLength))
         {
             result = stringValue.Length > trimLength 
                 ? stringValue.Substring(0, trimLength) 
