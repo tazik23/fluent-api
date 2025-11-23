@@ -13,7 +13,9 @@ public partial class ObjectPrintingTests
         public void PrintToString_NestedObject_ShouldPrintAllLevels()
         {
             var node = Node.CreateChain(3);
-            var printer = ObjectPrinter.For<Node>();
+            var printer = ObjectPrinter
+                .For<Node>()
+                .CreatePrinter();
             
             var result = printer.PrintToString(node);
 
@@ -26,7 +28,9 @@ public partial class ObjectPrintingTests
         public void PrintToString_WithCyclicReference_ShouldNotFall()
         {
             var node = Node.CreateChainWithCycle();
-            var printer = ObjectPrinter.For<Node>();
+            var printer = ObjectPrinter
+                .For<Node>()
+                .CreatePrinter();
             
             var act = () => printer.PrintToString(node);
             
@@ -38,7 +42,9 @@ public partial class ObjectPrintingTests
         public void PrintToString_WhenReachesMaxRecursionLevel_ShouldStop()
         {
             var node = Node.CreateChain(16);
-            var printer = ObjectPrinter.For<Node>();
+            var printer = ObjectPrinter
+                .For<Node>()
+                .CreatePrinter();
             
             var result = printer.PrintToString(node);
 

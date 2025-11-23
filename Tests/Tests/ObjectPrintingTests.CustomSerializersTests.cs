@@ -39,7 +39,8 @@ public partial class ObjectPrintingTests
         {
             var printer = ObjectPrinter.For<CustomSerializerTestsClass>()
                 .Printing<Guid>().Using(g => g
-                    .ToString("N").Substring(0, 8).ToUpper());
+                    .ToString("N").Substring(0, 8).ToUpper())
+                .CreatePrinter();
 
             var result = printer.PrintToString(testData);
 
@@ -51,7 +52,8 @@ public partial class ObjectPrintingTests
         {
             var printer = ObjectPrinter.For<CustomSerializerTestsClass>()
                 .Printing<int>().Using(i => $"{i} years")
-                .Printing(p => p.Age).Using(age => $"Age: {age}");
+                .Printing(p => p.Age).Using(age => $"Age: {age}")
+                .CreatePrinter();
 
             var result = printer.PrintToString(testData);
 
@@ -63,7 +65,8 @@ public partial class ObjectPrintingTests
         public void PrintToString_CustomSerializerReturnsNull_ShouldHandleCorrectly()
         {
             var printer = ObjectPrinter.For<CustomSerializerTestsClass>()
-                .Printing(p => p.Name).Using(_ => null);
+                .Printing(p => p.Name).Using(_ => null)
+                .CreatePrinter();
 
             var result = printer.PrintToString(testData);
 
@@ -76,7 +79,8 @@ public partial class ObjectPrintingTests
             var printer = ObjectPrinter.For<CustomSerializerTestsClass>()
                 .Printing<Guid>().Using(g => g.ToString().Substring(0, 8))
                 .Printing<int>().Using(i => $"#{i}")
-                .Printing<decimal>().Using(p => $"${p}");
+                .Printing<decimal>().Using(p => $"${p}")
+                .CreatePrinter();
 
             var result = printer.PrintToString(testData);
 
@@ -90,7 +94,8 @@ public partial class ObjectPrintingTests
         public void PrintToString_CustomSerializerForOneProperty_ShouldNotAffectOtherProperties()
         {
             var printer = ObjectPrinter.For<CustomSerializerTestsClass>()
-                .Printing(p => p.Price).Using(p => $"${p}");
+                .Printing(p => p.Price).Using(p => $"${p}")
+                .CreatePrinter();
 
             var result = printer.PrintToString(testData);
 
@@ -105,7 +110,8 @@ public partial class ObjectPrintingTests
             var printer = ObjectPrinter.For<CustomSerializerTestsClass>()
                 .Printing(p => p.Name).Using(n => $"{n.ToUpper()}")
                 .Printing(p => p.Age).Using(a => $"{a} years")
-                .Printing(p => p.Price).Using(p => $"${p}");
+                .Printing(p => p.Price).Using(p => $"${p}")
+                .CreatePrinter();
 
             var result = printer.PrintToString(testData);
 
@@ -120,7 +126,8 @@ public partial class ObjectPrintingTests
             var data = new { Price = 1234.56d, Weight = 7.89d };
             var printer = ObjectPrinter.For<object>()
                 .Printing<double>().Using(new CultureInfo("de-DE"))
-                .Printing<double>().Using(p => $"${p:0.00}");
+                .Printing<double>().Using(p => $"${p:0.00}")
+                .CreatePrinter();
 
             var result = printer.PrintToString(data);
 

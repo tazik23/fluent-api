@@ -24,7 +24,8 @@ public partial class ObjectPrintingTests
         public void PrintToString_ExcludedType_ShouldNotSerializeMembersOfThatType()
         {
             var printer = new PrintingConfig<Person>()
-                .Excluding<double>();
+                .Excluding<double>()
+                .CreatePrinter();
 
             var result = printer.PrintToString(person);
 
@@ -37,7 +38,8 @@ public partial class ObjectPrintingTests
             var obj = new TestClass { Property = "Prop", Field = "Field" };
 
             var printer = ObjectPrinter.For<TestClass>()
-                .Excluding<string>();
+                .Excluding<string>()
+                .CreatePrinter();
 
             var result = printer.PrintToString(obj);
             result.Should().NotContain("Prop").And.NotContain("Field");
@@ -47,7 +49,8 @@ public partial class ObjectPrintingTests
         public void PrintToString_ExcludedProperty_ShouldNotSerializeProperty()
         {
             var printer = new PrintingConfig<Person>()
-                .Excluding(p => p.Age);
+                .Excluding(p => p.Age)
+                .CreatePrinter();
 
             var result = printer.PrintToString(person);
 
@@ -69,9 +72,9 @@ public partial class ObjectPrintingTests
         {
             var printer = ObjectPrinter.For<Person>()
                 .Excluding(p => p.Id)
-                .Excluding(p => p.Age);
-
-
+                .Excluding(p => p.Age)
+                .CreatePrinter();
+            
             var result = printer.PrintToString(person);
             result.Should().NotContain("Id").And.NotContain("Age");
         }
@@ -93,7 +96,8 @@ public partial class ObjectPrintingTests
                 .Excluding<string>()
                 .Excluding<int>()
                 .Excluding(p => p.Id)
-                .Excluding(p => p.Height);
+                .Excluding(p => p.Height)
+                .CreatePrinter();
 
             var result = printer.PrintToString(person);
 

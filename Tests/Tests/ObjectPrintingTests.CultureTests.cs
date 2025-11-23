@@ -34,7 +34,8 @@ public partial class ObjectPrintingTests
         public void PrintToString_CustomCulture_ShouldApplyFormatting()
         {
             var printer = ObjectPrinter.For<CultureTestClass>()
-                .Printing<decimal>().Using(new CultureInfo("de-DE"));
+                .Printing<decimal>().Using(new CultureInfo("de-DE"))
+                .CreatePrinter();
 
             var result = printer.PrintToString(testData);
 
@@ -47,7 +48,8 @@ public partial class ObjectPrintingTests
             var printer = ObjectPrinter.For<CultureTestClass>()
                 .Printing<double>().Using(new CultureInfo("es-ES"))
                 .Printing<decimal>().Using(new CultureInfo("en-US"))
-                .Printing<DateTime>().Using(new CultureInfo("fr-FR"));
+                .Printing<DateTime>().Using(new CultureInfo("fr-FR"))
+                .CreatePrinter();
 
             var result = printer.PrintToString(testData);
 

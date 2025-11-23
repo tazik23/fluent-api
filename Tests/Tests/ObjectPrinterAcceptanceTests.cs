@@ -20,7 +20,8 @@ namespace Tests.Tests
                 .Printing<double>().Using(CultureInfo.InvariantCulture) // 3. Для числовых типов указать культуру
                 .Printing(p => p.Age).Using(a => $"AGE : {a}") // 4. Настроить сериализацию конкретного свойства
                 .Printing(p => p.Name).TrimToLength(10) // 5. Настроить обрезание строковых свойств
-                .Excluding(p => p.Age); // 6. Исключить конкретное свойство
+                .Excluding(p => p.Age)
+                .CreatePrinter(); // 6. Исключить конкретное свойство
 
             var s1 = printer.PrintToString(person);
         

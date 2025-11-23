@@ -65,12 +65,11 @@ public partial class ObjectPrintingTests
             .Printing<decimal>().Using(new CultureInfo("de-DE"))
             .Printing<double>().Using(new CultureInfo("fr-FR"))
             .Printing<List<string>>().Using(list => $"Tags[{list.Count}]")
-            .Printing<Dictionary<string, int>>().Using(dict => $"Scores[{dict.Count}]");
+            .Printing<Dictionary<string, int>>().Using(dict => $"Scores[{dict.Count}]")
+            .CreatePrinter();
 
         var result = printer.PrintToString(testData);
 
         await Verify(result);
     }
-    
-    
 }

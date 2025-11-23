@@ -17,7 +17,7 @@ public partial class ObjectPrintingTests
         public void PrintToString_Array_ShouldPrintEachElement()
         {
             var data = new[] { 1, 2, 3 };
-            var printer = ObjectPrinter.For<int[]>();
+            var printer = ObjectPrinter.For<int[]>().CreatePrinter();
             
             var result = printer.PrintToString(data);
             
@@ -37,7 +37,7 @@ public partial class ObjectPrintingTests
                 new CollectionTestsClass { Name = "Alice", Age = 25 },
                 new CollectionTestsClass { Name = "Bob", Age = 30 }
             };
-            var printer = ObjectPrinter.For<CollectionTestsClass[]>();
+            var printer = ObjectPrinter.For<CollectionTestsClass[]>().CreatePrinter();
             
             var result = printer.PrintToString(data);
 
@@ -55,7 +55,7 @@ public partial class ObjectPrintingTests
                 [2] = "2"
             };
 
-            var printer = ObjectPrinter.For<Dictionary<int, string>>();
+            var printer = ObjectPrinter.For<Dictionary<int, string>>().CreatePrinter();
             var result = printer.PrintToString(dict);
 
             result.Should()
@@ -73,7 +73,9 @@ public partial class ObjectPrintingTests
                 [new CollectionTestsClass { Name = "Developer" }] = new Department { Name = "IT" }
             };
 
-            var printer = ObjectPrinter.For<Dictionary<CollectionTestsClass, Department>>();
+            var printer = ObjectPrinter
+                .For<Dictionary<CollectionTestsClass, Department>>()
+                .CreatePrinter();
             var result = printer.PrintToString(dict);
             
             result.Should().MatchRegex(
@@ -85,7 +87,9 @@ public partial class ObjectPrintingTests
         public void PrintToString_EmptyCollection_ShouldShowEmptyStructure()
         {
             var data = new CollectionTestsClass { Name = "Test", Friends = new List<CollectionTestsClass>() };
-            var printer = ObjectPrinter.For<CollectionTestsClass>();
+            var printer = ObjectPrinter
+                .For<CollectionTestsClass>()
+                .CreatePrinter();
             var result = printer.PrintToString(data);
 
             result.Should().Contain("Friends = [");
@@ -95,7 +99,9 @@ public partial class ObjectPrintingTests
         public void PrintToString_NullCollection_ShouldShowNull()
         {
             var data = new CollectionTestsClass() { Name = "Test", Friends = null };
-            var printer = ObjectPrinter.For<CollectionTestsClass>();
+            var printer = ObjectPrinter
+                .For<CollectionTestsClass>()
+                .CreatePrinter();
             var result = printer.PrintToString(data);
 
             result.Should().Contain("Friends = null");

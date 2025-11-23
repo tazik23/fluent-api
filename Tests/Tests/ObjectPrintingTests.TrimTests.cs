@@ -20,7 +20,8 @@ public partial class ObjectPrintingTests
         {
             var data = new TrimTestsClass { Long = "Very long text" };
             var printer = ObjectPrinter.For<TrimTestsClass>()
-                .Printing(p => p.Long).TrimToLength(0);
+                .Printing(p => p.Long).TrimToLength(0)
+                .CreatePrinter();
 
             var result = printer.PrintToString(data);
 
@@ -40,7 +41,8 @@ public partial class ObjectPrintingTests
             var printer = ObjectPrinter.For<TrimTestsClass>()
                 .Printing(p => p.Short).TrimToLength(3)
                 .Printing(p => p.Long).TrimToLength(10)
-                .Printing(p => p.Description).TrimToLength(6);
+                .Printing(p => p.Description).TrimToLength(6)
+                .CreatePrinter();
 
             var result = printer.PrintToString(data);
 
