@@ -157,7 +157,7 @@ public class ObjectPrinter
     {
         if (settings.MemberSerializers.TryGetValue(member, out var serializer))
         {
-            result = serializer(value);
+            result = Convert.ToString(serializer(value), CultureInfo.InvariantCulture);
             return true;
         }
     
